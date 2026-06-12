@@ -284,7 +284,6 @@ const Analytics = () => {
               </CardContent>
             </Card>
           </Grid>
-          </Grid>
         </Grid>
 
         {/* AI Audience Insights Card */}
