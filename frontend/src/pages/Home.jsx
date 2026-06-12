@@ -38,7 +38,9 @@ import {
   AutoAwesome as MagicIcon,
   Star,
   ExpandMore as ExpandMoreIcon,
-  Warning as WarningIcon
+  Warning as WarningIcon,
+  FolderOpen as FolderIcon,
+  TrendingUp as TrendingUpIcon
 } from '@mui/icons-material';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -77,6 +79,15 @@ const Home = () => {
       navigate('/dashboard', { state: { activeTab } });
     } else {
       setSelectedTool(toolName);
+      setAuthDialogOpen(true);
+    }
+  };
+
+  const handleCampaignClick = () => {
+    if (user) {
+      navigate('/campaigns');
+    } else {
+      setSelectedTool('AI Campaigns');
       setAuthDialogOpen(true);
     }
   };
@@ -373,7 +384,7 @@ const Home = () => {
                 </Card>
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
                 <Card sx={{ 
                   cursor: 'pointer',
                   height: '100%', 
@@ -397,7 +408,7 @@ const Home = () => {
                 </Card>
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
                 <Card sx={{ 
                   cursor: 'pointer',
                   height: '100%', 
@@ -416,6 +427,30 @@ const Home = () => {
                     </Box>
                     <Typography variant="caption" color="text.secondary">
                       Map clean, custom back-half paths to replace random alphanumeric hashes.
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} sm={4}>
+                <Card sx={{ 
+                  cursor: 'pointer',
+                  height: '100%', 
+                  background: 'rgba(21, 28, 45, 0.55)', 
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    borderColor: '#10b981',
+                    boxShadow: '0 10px 25px rgba(16, 185, 129, 0.15)'
+                  }
+                }} onClick={handleCampaignClick}>
+                  <CardContent sx={{ p: 2.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                      <FolderIcon sx={{ color: '#10b981' }} />
+                      <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>AI Campaigns</Typography>
+                    </Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Group links under campaign projects. Let AI aggregate stats and optimize.
                     </Typography>
                   </CardContent>
                 </Card>
@@ -754,18 +789,88 @@ const Home = () => {
           </Container>
         </Box>
 
+        {/* How It Works Section */}
+        <Box sx={{ py: 10, backgroundColor: 'rgba(21, 28, 45, 0.15)', borderTop: '1px solid rgba(255, 255, 255, 0.05)', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+          <Container maxWidth="lg">
+            <Typography variant="h4" align="center" sx={{ fontWeight: 800, mb: 1 }}>
+              How LinkEnhancer Works
+            </Typography>
+            <Typography variant="body1" align="center" color="text.secondary" sx={{ mb: 8, maxWidth: 600, mx: 'auto' }}>
+              Transform raw links into intelligent digital marketing assets in four simple steps.
+            </Typography>
+
+            <Grid container spacing={4}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ p: 3, textAlign: 'center' }}>
+                  <Typography variant="h3" sx={{ fontWeight: 900, color: 'primary.main', mb: 2, opacity: 0.8 }}>
+                    01
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>
+                    Scan & Verify
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                    Submit any destination URL. Our real-time AI scanner screens for phishing, malware, and safety threats.
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ p: 3, textAlign: 'center' }}>
+                  <Typography variant="h3" sx={{ fontWeight: 900, color: 'primary.main', mb: 2, opacity: 0.8 }}>
+                    02
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>
+                    Shorten & Brand
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                    Generate compact shortlinks with custom branded slug paths and matching high-res vector QRs.
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ p: 3, textAlign: 'center' }}>
+                  <Typography variant="h3" sx={{ fontWeight: 900, color: 'primary.main', mb: 2, opacity: 0.8 }}>
+                    03
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>
+                    Predict Engagement
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                    Run marketing descriptions through our CTR predictor to test platform click-through potential before posting.
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ p: 3, textAlign: 'center' }}>
+                  <Typography variant="h3" sx={{ fontWeight: 900, color: 'primary.main', mb: 2, opacity: 0.8 }}>
+                    04
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>
+                    AI-Driven Analytics
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                    Get detailed audience metrics (mobile ratio, active times) and smart recommendations to optimize future postings.
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Container>
+        </Box>
+
         {/* Features Grid */}
         <Container maxWidth="lg" sx={{ py: 10 }}>
           <Typography variant="h4" align="center" sx={{ fontWeight: 800, mb: 1 }}>
             Enterprise Features, Simplified
           </Typography>
           <Typography variant="body1" align="center" color="text.secondary" sx={{ mb: 8 }}>
-            Everything you need to capture clicks and optimize sharing performance.
+            Everything you need to capture clicks, secure visitors, and optimize sharing performance.
           </Typography>
 
           <Grid container spacing={4}>
             {/* Feature 1 */}
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6} md={4}>
               <Card sx={{ height: '100%' }}>
                 <CardContent sx={{ p: 4, textAlign: 'center' }}>
                   <Box sx={{ backgroundColor: 'rgba(248, 68, 100, 0.1)', display: 'inline-flex', p: 2, borderRadius: '50%', mb: 3 }}>
@@ -782,7 +887,58 @@ const Home = () => {
             </Grid>
 
             {/* Feature 2 */}
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6} md={4}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                  <Box sx={{ backgroundColor: 'rgba(248, 68, 100, 0.1)', display: 'inline-flex', p: 2, borderRadius: '50%', mb: 3 }}>
+                    <SecurityIcon sx={{ color: 'primary.main', fontSize: 32 }} />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>
+                    AI Scam Detection
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                    Check target links dynamically for phishing, malware, or suspicious indicators to safeguard visitors before they land.
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Feature 3 */}
+            <Grid item xs={12} sm={6} md={4}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                  <Box sx={{ backgroundColor: 'rgba(248, 68, 100, 0.1)', display: 'inline-flex', p: 2, borderRadius: '50%', mb: 3 }}>
+                    <TrendingUpIcon sx={{ color: 'primary.main', fontSize: 32 }} />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>
+                    AI Audience Analysis
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                    Extract smart insights including device ratio percentages, peak active timezones, and optimal daily posting windows.
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Feature 4 */}
+            <Grid item xs={12} sm={6} md={4}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                  <Box sx={{ backgroundColor: 'rgba(248, 68, 100, 0.1)', display: 'inline-flex', p: 2, borderRadius: '50%', mb: 3 }}>
+                    <FolderIcon sx={{ color: 'primary.main', fontSize: 32 }} />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>
+                    AI Campaign Tracking
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                    Organize your links into campaign groups. Let AI highlight the best vs worst performing items with suggestion copies.
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Feature 5 */}
+            <Grid item xs={12} sm={6} md={4}>
               <Card sx={{ height: '100%' }}>
                 <CardContent sx={{ p: 4, textAlign: 'center' }}>
                   <Box sx={{ backgroundColor: 'rgba(248, 68, 100, 0.1)', display: 'inline-flex', p: 2, borderRadius: '50%', mb: 3 }}>
@@ -792,24 +948,24 @@ const Home = () => {
                     Advanced Analytics
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                    Monitor visitor browser engines, device scopes, operating systems, and approximate geolocations in real-time.
+                    Monitor visitor browser signatures, device scopes, operating systems, and approximate geolocations in real-time.
                   </Typography>
                 </CardContent>
               </Card>
             </Grid>
 
-            {/* Feature 3 */}
-            <Grid item xs={12} sm={4}>
+            {/* Feature 6 */}
+            <Grid item xs={12} sm={6} md={4}>
               <Card sx={{ height: '100%' }}>
                 <CardContent sx={{ p: 4, textAlign: 'center' }}>
                   <Box sx={{ backgroundColor: 'rgba(248, 68, 100, 0.1)', display: 'inline-flex', p: 2, borderRadius: '50%', mb: 3 }}>
                     <MagicIcon sx={{ color: 'primary.main', fontSize: 32 }} />
                   </Box>
                   <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>
-                    Custom Aliases & QRs
+                    Custom Brand Aliases
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                    Create custom back-half paths to replace random hashes, and download unique QR Codes instantly.
+                    Create custom back-half paths to replace random alphanumeric hashes, and download unique vector-ready QR codes.
                   </Typography>
                 </CardContent>
               </Card>
