@@ -1,6 +1,6 @@
-# TinyLink: Full-Stack URL Shortener with Analytics
+# LinkEnhancer: Full-Stack URL Shortener with Analytics
 
-TinyLink is a performance-focused URL Shortener application built with React, Node.js/Express, and MongoDB. It features instant redirects, non-blocking click-telemetry analytics (capture browser, device, and IP metrics), user authentication, and a dashboard workspace.
+LinkEnhancer is a performance-focused URL Shortener application built with React, Node.js/Express, and MongoDB. It features instant redirects, non-blocking click-telemetry analytics (capture browser, device, and IP metrics), user authentication, and a dashboard workspace.
 
 ---
 
