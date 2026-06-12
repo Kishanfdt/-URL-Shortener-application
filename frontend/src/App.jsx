@@ -10,6 +10,8 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Analytics from './pages/Analytics';
+import Campaigns from './pages/Campaigns';
+import CampaignDetails from './pages/CampaignDetails';
 
 // Import Reusable Layouts
 import ProtectedLayout from './components/Layout/ProtectedLayout';
@@ -85,6 +87,8 @@ const App = () => {
               </ProtectedRoute>
             }>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/campaigns" element={<Campaigns />} />
+              <Route path="/campaigns/:id" element={<CampaignDetails />} />
               <Route path="/analytics/:urlId" element={<Analytics />} />
             </Route>
 

@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit');
 const authRoutes = require('./routes/authRoutes');
 const urlRoutes = require('./routes/urlRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const campaignRoutes = require('./routes/campaignRoutes');
 const redirectRoutes = require('./routes/redirectRoutes');
 const errorHandler = require('./middlewares/errorHandler');
 
@@ -45,6 +46,7 @@ app.use(express.json({ limit: '10kb' }));
 app.use('/api/v1/auth', authLimiter, authRoutes);
 app.use('/api/v1/urls', urlRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
+app.use('/api/v1/campaigns', campaignRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

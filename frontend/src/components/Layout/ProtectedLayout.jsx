@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, useNavigate, Link as RouterLink } from 'react-router-dom';
+import { Outlet, useNavigate, Link as RouterLink, useLocation } from 'react-router-dom';
 import {
   AppBar,
   Toolbar,
@@ -17,6 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 const ProtectedLayout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -53,15 +54,55 @@ const ProtectedLayout = () => {
             {/* Logo / Brand Name */}
             <Box component={RouterLink} to="/dashboard" sx={{ display: 'flex', alignItems: 'center', gap: 1, textDecoration: 'none', color: 'text.primary' }}>
               <LinkIcon sx={{ color: 'primary.main', fontSize: 28 }} />
-              <Typography variant="h6" sx={{ fontWeight: 900, letterSpacing: '-0.8px' }}>
+              <Typography variant="h6" sx={{ fontWeight: 900, letterSpacing: '-0.8px', display: { xs: 'none', md: 'block' } }}>
                 Link<Box component="span" sx={{ color: 'primary.main' }}>Enhancer</Box>
               </Typography>
+            </Box>
+
+            {/* Navigation Tabs */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
+              <Button
+                component={RouterLink}
+                to="/dashboard"
+                sx={{
+                  color: location.pathname === '/dashboard' ? 'primary.main' : 'text.primary',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  textTransform: 'none',
+                  px: { xs: 1.5, sm: 2 },
+                  py: 1,
+                  borderRadius: 2,
+                  '&:hover': {
+                    backgroundColor: 'rgba(248, 68, 100, 0.08)'
+                  }
+                }}
+              >
+                Dashboard
+              </Button>
+              <Button
+                component={RouterLink}
+                to="/campaigns"
+                sx={{
+                  color: location.pathname.startsWith('/campaigns') ? 'primary.main' : 'text.primary',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  textTransform: 'none',
+                  px: { xs: 1.5, sm: 2 },
+                  py: 1,
+                  borderRadius: 2,
+                  '&:hover': {
+                    backgroundColor: 'rgba(248, 68, 100, 0.08)'
+                  }
+                }}
+              >
+                Campaigns
+              </Button>
             </Box>
 
             {/* User Identity Profile Control */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               {user && (
-                <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' }, fontWeight: 500 }}>
+                <Typography variant="body2" sx={{ display: { xs: 'none', lg: 'block' }, fontWeight: 500 }}>
                   Hello, <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>{user.name}</Box>
                 </Typography>
               )}
@@ -81,12 +122,12 @@ const ProtectedLayout = () => {
         </Container>
       </AppBar>
 
-        {/* Main Content Box */}
-        <Box sx={{ flex: 1, py: 2 }}>
-          <Outlet />
-        </Box>
-
+      {/* Main Content Box */}
+      <Box sx={{ flex: 1, py: 2 }}>
+        <Outlet />
       </Box>
+
+    </Box>
   );
 };
 

@@ -414,11 +414,65 @@ const generateAudienceInsights = async (mobilePercentage, mostActiveTime, bestPe
   };
 };
 
+/**
+ * Generate AI campaign insights from multiple URLs
+ * @param {Array} urlStats - Array of objects containing url and click data
+ */
+const generateCampaignInsights = async (urlStats) => {
+  if (!urlStats || urlStats.length === 0) {
+    return {
+      bestLink: 'N/A',
+      worstLink: 'N/A',
+      optimizationSuggestions: 'Add links to your campaign to generate optimization insights.'
+    };
+  }
+
+  // Calculate Best and Worst
+  let best = urlStats[0];
+  let worst = urlStats[0];
+
+  urlStats.forEach(stat => {
+    if (stat.clicks > best.clicks) best = stat;
+    if (stat.clicks < worst.clicks) worst = stat;
+  });
+
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (geminiKey) {
+    const prompt = `Based on the following URL campaign click analytics:
+    ${JSON.stringify(urlStats, null, 2)}
+    
+    Provide a professional marketing campaign insight analysis in raw JSON ONLY.
+    The response must follow this schema:
+    {
+      "bestLink": "The shortUrl string of the best performing link",
+      "worstLink": "The shortUrl string of the worst performing link",
+      "optimizationSuggestions": "Actionable suggestions on how to improve the worst performing link or the campaign overall based on this data"
+    }`;
+    
+    const aiInsight = await queryGemini(prompt, 'You are an advanced digital marketing analytics coordinator.');
+    if (aiInsight) {
+      return {
+        bestLink: aiInsight.bestLink || best.shortUrl,
+        worstLink: aiInsight.worstLink || worst.shortUrl,
+        optimizationSuggestions: aiInsight.optimizationSuggestions || `Focus more promotion on the content similar to your best link (${best.shortUrl}).`
+      };
+    }
+  }
+
+  // Fallback
+  return {
+    bestLink: best.shortUrl || 'N/A',
+    worstLink: worst.shortUrl || 'N/A',
+    optimizationSuggestions: `Your best performing link is ${best.shortUrl || 'N/A'} with ${best.clicks || 0} clicks. Consider reviewing ${worst.shortUrl || 'N/A'} to see why it has lower engagement and try adjusting its placement or call-to-action.`
+  };
+};
+
 module.exports = {
   scrapeWebpage,
   generateMarketingSuite,
   checkLinkSafety,
   predictCtrScore,
-  generateAudienceInsights
+  generateAudienceInsights,
+  generateCampaignInsights
 };
 
