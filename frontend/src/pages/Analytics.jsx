@@ -19,7 +19,7 @@ import {
   Divider,
   LinearProgress,
 } from '@mui/material';
-import { ArrowBack, Link as LinkIcon, BarChart as ChartIcon } from '@mui/icons-material';
+import { ArrowBack, Link as LinkIcon, BarChart as ChartIcon, AutoAwesome as MagicIcon } from '@mui/icons-material';
 import api from '../services/api';
 
 // Import Chart.js components
@@ -284,7 +284,78 @@ const Analytics = () => {
               </CardContent>
             </Card>
           </Grid>
+          </Grid>
         </Grid>
+
+        {/* AI Audience Insights Card */}
+        {data.aiInsights && (
+          <Card sx={{ mb: 4, border: '1px solid #f84464', backgroundColor: 'rgba(248, 68, 100, 0.02)' }}>
+            <CardContent sx={{ p: 4 }}>
+              <Typography variant="h5" sx={{ fontWeight: 800, mb: 3, display: 'flex', alignItems: 'center', gap: 1, color: 'primary.main' }}>
+                <MagicIcon /> AI Audience Insights
+              </Typography>
+              
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={4}>
+                  <Box sx={{ p: 3, backgroundColor: 'background.paper', borderRadius: 2, height: '100%', border: '1px solid #222538' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', fontWeight: 700, mb: 1, display: 'block' }}>
+                      Mobile Engagement
+                    </Typography>
+                    <Typography variant="h3" sx={{ fontWeight: 800, color: '#f84464' }}>
+                      {data.aiInsights.mobilePercentage !== undefined ? `${data.aiInsights.mobilePercentage}%` : 'N/A'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      of visitors use a mobile device.
+                    </Typography>
+                  </Box>
+                </Grid>
+                
+                <Grid item xs={12} md={4}>
+                  <Box sx={{ p: 3, backgroundColor: 'background.paper', borderRadius: 2, height: '100%', border: '1px solid #222538' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', fontWeight: 700, mb: 1, display: 'block' }}>
+                      Peak Activity Hour
+                    </Typography>
+                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#3b82f6' }}>
+                      {data.aiInsights.mostActiveTime || 'N/A'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      is when your audience is most active.
+                    </Typography>
+                  </Box>
+                </Grid>
+                
+                <Grid item xs={12} md={4}>
+                  <Box sx={{ p: 3, backgroundColor: 'background.paper', borderRadius: 2, height: '100%', border: '1px solid #222538' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', fontWeight: 700, mb: 1, display: 'block' }}>
+                      Best Performing Day
+                    </Typography>
+                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#10b981' }}>
+                      {data.aiInsights.bestPerformingDay || 'N/A'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      generates the most traffic.
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+
+              <Box sx={{ mt: 4, p: 3, backgroundColor: 'background.default', borderRadius: 2, border: '1px solid #222538' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                  Analysis & Recommendation
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.6 }}>
+                  {data.aiInsights.explanation}
+                </Typography>
+                <Box sx={{ p: 2, backgroundColor: 'rgba(59, 130, 246, 0.1)', borderLeft: '4px solid #3b82f6', borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#3b82f6' }}>
+                    💡 Actionable Tip: {data.aiInsights.recommendation}
+                  </Typography>
+                </Box>
+              </Box>
+
+            </CardContent>
+          </Card>
+        )}
 
         {/* Target Destination URL Card */}
         <Card sx={{ mb: 4 }}>

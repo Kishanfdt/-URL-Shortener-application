@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { createShortUrl, getUserUrls, deleteUserUrl, getQrCodeImage, createGuestUrl, predictEngagement } = require('../controllers/urlController');
+const { createShortUrl, getUserUrls, deleteUserUrl, getQrCodeImage, createGuestUrl, predictEngagement, scanUrlSafety } = require('../controllers/urlController');
 const { protect } = require('../middlewares/authMiddleware');
 const { validateUrlInput } = require('../validators/urlValidator');
 
@@ -10,6 +10,9 @@ router.get('/:id/qrcode', getQrCodeImage);
 
 // Public guest URL shortening route (anonymous)
 router.post('/guest', validateUrlInput, createGuestUrl);
+
+// Public scan safety route
+router.post('/scan-safety', scanUrlSafety);
 
 // Public CTR prediction route
 router.post('/predict', predictEngagement);

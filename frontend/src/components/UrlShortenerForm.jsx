@@ -16,7 +16,12 @@ import {
   AccordionSummary,
   AccordionDetails,
   Divider,
-  Chip
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText
 } from '@mui/material';
 import {
   Link as LinkIcon,
@@ -48,6 +53,10 @@ const UrlShortenerForm = ({ onUrlCreated }) => {
   const [copied, setCopied] = useState(false);
   const [safetyWarning, setSafetyWarning] = useState(null);
   const [copiedTextType, setCopiedTextType] = useState(null);
+  
+  // Safety Bypass State
+  const [confirmSafetyOpen, setConfirmSafetyOpen] = useState(false);
+  const [safetyScanResult, setSafetyScanResult] = useState(null);
   
   // Toast notifications
   const [toastOpen, setToastOpen] = useState(false);
@@ -118,54 +127,83 @@ const UrlShortenerForm = ({ onUrlCreated }) => {
     setLoading(true);
     setSafetyWarning(null);
     setNewUrlData(null);
+    
     try {
-      const response = await api.post('/urls', { 
-        originalUrl,
-        customAlias: customAlias.trim() || undefined, // Only pass if user entered one
-        expiresAt: expiresAt || undefined
-      });
-      const createdLink = response.data.url;
+      // 1. Pre-scan the URL for safety
+      const scanRes = await api.post('/urls/scan-safety', { originalUrl });
+      const safety = scanRes.data.safety;
       
-      setNewUrlData(createdLink);
-      setOriginalUrl('');
-      setCustomAlias('');
-      setExpiresAt('');
-      showToast('Link shortened successfully!');
-      
-      // Trigger parent callback to refresh listings
-      if (onUrlCreated) {
-        onUrlCreated(createdLink);
+      if (safety.riskScore >= 50) {
+        // High risk detected, show confirm modal
+        setSafetyScanResult(safety);
+        setConfirmSafetyOpen(true);
+        setLoading(false);
+        return;
       }
+      
+      // If safe, proceed with creation
+      await createUrlRequest(false);
     } catch (error) {
-      console.error(error);
-      if (error.response && error.response.data) {
-        if (error.response.data.isUnsafe) {
-          // Blocked due to safety issues
-          setSafetyWarning({
-            originalUrl,
-            riskScore: error.response.data.safetyInfo?.riskScore || 0,
-            status: error.response.data.safetyInfo?.status || 'unsafe',
-            warning: error.response.data.safetyInfo?.warning || 'URL is marked as high-risk or malicious.'
-          });
-          showToast('URL creation blocked: Safety threat detected.', 'error');
-        } else if (error.response.data.errors) {
-          // Field-specific validation errors (e.g., alias validation format)
-          setFormErrors(error.response.data.errors);
-        } else if (error.response.data.message) {
-          // String errors (e.g., "This custom alias is already taken")
-          const errMsg = error.response.data.message;
-          if (errMsg.toLowerCase().includes('alias')) {
-            setFormErrors({ customAlias: errMsg });
-          } else {
-            showToast(errMsg, 'error');
-          }
-        }
-      } else {
-        showToast('Failed to create short link.', 'error');
-      }
-    } finally {
-      setLoading(false);
+      handleApiError(error);
     }
+  };
+
+  const handleConfirmBypass = async () => {
+    setConfirmSafetyOpen(false);
+    setLoading(true);
+    try {
+      await createUrlRequest(true);
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
+
+  const createUrlRequest = async (bypassSafety) => {
+    const response = await api.post('/urls', { 
+      originalUrl,
+      customAlias: customAlias.trim() || undefined,
+      expiresAt: expiresAt || undefined,
+      bypassSafety
+    });
+    const createdLink = response.data.url;
+    
+    setNewUrlData(createdLink);
+    setOriginalUrl('');
+    setCustomAlias('');
+    setExpiresAt('');
+    showToast('Link shortened successfully!');
+    
+    if (onUrlCreated) {
+      onUrlCreated(createdLink);
+    }
+    setLoading(false);
+  };
+
+  const handleApiError = (error) => {
+    console.error(error);
+    if (error.response && error.response.data) {
+      if (error.response.data.isUnsafe) {
+        setSafetyWarning({
+          originalUrl,
+          riskScore: error.response.data.safetyInfo?.riskScore || 0,
+          status: error.response.data.safetyInfo?.status || 'unsafe',
+          warning: error.response.data.safetyInfo?.warning || 'URL is marked as high-risk or malicious.'
+        });
+        showToast('URL creation blocked: Safety threat detected.', 'error');
+      } else if (error.response.data.errors) {
+        setFormErrors(error.response.data.errors);
+      } else if (error.response.data.message) {
+        const errMsg = error.response.data.message;
+        if (errMsg.toLowerCase().includes('alias')) {
+          setFormErrors({ customAlias: errMsg });
+        } else {
+          showToast(errMsg, 'error');
+        }
+      }
+    } else {
+      showToast('Failed to create short link.', 'error');
+    }
+    setLoading(false);
   };
 
   // Clipboard copy action for the newly created link
@@ -568,6 +606,51 @@ const UrlShortenerForm = ({ onUrlCreated }) => {
           {toastMsg}
         </Alert>
       </Snackbar>
+
+      {/* Safety Confirmation Dialog */}
+      <Dialog
+        open={confirmSafetyOpen}
+        onClose={() => setConfirmSafetyOpen(false)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+        PaperProps={{
+          sx: {
+            backgroundColor: 'background.paper',
+            border: '1px solid #f84464',
+            borderRadius: 2
+          }
+        }}
+      >
+        <DialogTitle id="alert-dialog-title" sx={{ color: '#f84464', display: 'flex', alignItems: 'center', gap: 1, fontWeight: 'bold' }}>
+          <WarningIcon /> Unsafe URL Detected
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description" sx={{ color: 'text.primary', mb: 2 }}>
+            The URL you are trying to shorten has been flagged as potentially malicious.
+          </DialogContentText>
+          {safetyScanResult && (
+            <Alert severity="error" variant="outlined" sx={{ borderColor: '#f84464', backgroundColor: 'rgba(248, 68, 100, 0.05)' }}>
+              <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#f84464' }}>
+                Risk Score: {safetyScanResult.riskScore}%
+              </Typography>
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                {safetyScanResult.warning}
+              </Typography>
+            </Alert>
+          )}
+          <DialogContentText sx={{ color: 'text.secondary', mt: 2, fontSize: '0.9rem' }}>
+            Are you sure you want to shorten this link? Users who click on it will be shown a warning page before being redirected.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0 }}>
+          <Button onClick={() => setConfirmSafetyOpen(false)} color="inherit" sx={{ fontWeight: 'bold' }}>
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmBypass} variant="contained" sx={{ backgroundColor: '#f84464', color: 'white', '&:hover': { backgroundColor: '#e11d48' }, fontWeight: 'bold' }} autoFocus>
+            Proceed Anyway
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

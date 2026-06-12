@@ -1,11 +1,29 @@
+const os = require('os');
 const QRCode = require('qrcode');
 const Url = require('../models/Url');
 const urlService = require('../services/urlService');
 const aiService = require('../services/aiService');
 
+const getLocalIpAddress = () => {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return 'localhost';
+};
+
 // Helper to determine active server base URL (e.g. http://localhost:5000)
 const getBaseUrl = (req) => {
-  return `${req.protocol}://${req.get('host')}`;
+  let host = req.get('host');
+  if (host && (host.includes('localhost') || host.includes('127.0.0.1'))) {
+    const port = host.split(':')[1] || '5000';
+    host = `${getLocalIpAddress()}:${port}`;
+  }
+  return `${req.protocol}://${host}`;
 };
 
 /**
@@ -15,11 +33,11 @@ const getBaseUrl = (req) => {
  */
 const createShortUrl = async (req, res, next) => {
   try {
-    const { originalUrl, customAlias, expiresAt } = req.body;
+    const { originalUrl, customAlias, expiresAt, bypassSafety } = req.body;
     const userId = req.user._id;
     const host = getBaseUrl(req);
 
-    const data = await urlService.createUrl(originalUrl, userId, host, customAlias, expiresAt);
+    const data = await urlService.createUrl(originalUrl, userId, host, customAlias, expiresAt, bypassSafety);
 
     res.status(201).json({
       success: true,
@@ -115,11 +133,11 @@ const getQrCodeImage = async (req, res, next) => {
  */
 const createGuestUrl = async (req, res, next) => {
   try {
-    const { originalUrl, expiresAt } = req.body;
+    const { originalUrl, expiresAt, bypassSafety } = req.body;
     const host = getBaseUrl(req);
 
     // Call createUrl service with undefined userId
-    const data = await urlService.createUrl(originalUrl, undefined, host, undefined, expiresAt);
+    const data = await urlService.createUrl(originalUrl, undefined, host, undefined, expiresAt, bypassSafety);
 
     res.status(201).json({
       success: true,
@@ -144,11 +162,34 @@ const predictEngagement = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Scan URL for safety before shortening
+ * @route   POST /api/v1/urls/scan-safety
+ * @access  Public
+ */
+const scanUrlSafety = async (req, res, next) => {
+  try {
+    const { originalUrl } = req.body;
+    if (!originalUrl) {
+      return res.status(400).json({ success: false, message: 'Please provide a URL to scan' });
+    }
+    const safetyResult = await aiService.checkLinkSafety(originalUrl);
+    
+    res.status(200).json({
+      success: true,
+      safety: safetyResult
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createShortUrl,
   getUserUrls,
   deleteUserUrl,
   getQrCodeImage,
   createGuestUrl,
-  predictEngagement
+  predictEngagement,
+  scanUrlSafety
 };

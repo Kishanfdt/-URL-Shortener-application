@@ -58,6 +58,10 @@ const Home = () => {
   const [safetyWarning, setSafetyWarning] = useState(null);
   const [copiedTextType, setCopiedTextType] = useState(null);
   
+  // Safety Bypass State
+  const [confirmSafetyOpen, setConfirmSafetyOpen] = useState(false);
+  const [safetyScanResult, setSafetyScanResult] = useState(null);
+  
   // Toasts
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
@@ -125,28 +129,55 @@ const Home = () => {
 
     setLoading(true);
     try {
-      // Post to public guest route
-      const response = await api.post('/urls/guest', { originalUrl, expiresAt: expiresAt || undefined });
-      setNewUrlData(response.data.url);
-      setOriginalUrl('');
-      setExpiresAt('');
-      showToast('Url shortened successfully!');
-    } catch (err) {
-      console.error(err);
-      if (err.response && err.response.data && err.response.data.isUnsafe) {
-        setSafetyWarning({
-          originalUrl,
-          riskScore: err.response.data.safetyInfo?.riskScore || 0,
-          status: err.response.data.safetyInfo?.status || 'unsafe',
-          warning: err.response.data.safetyInfo?.warning || 'URL is marked as high-risk or malicious.'
-        });
-        showToast('URL creation blocked: Safety threat detected.', 'error');
-      } else {
-        showToast('Failed to shorten URL. Try again later.', 'error');
+      const scanRes = await api.post('/urls/scan-safety', { originalUrl });
+      const safety = scanRes.data.safety;
+
+      if (safety.riskScore >= 50) {
+        setSafetyScanResult(safety);
+        setConfirmSafetyOpen(true);
+        setLoading(false);
+        return;
       }
-    } finally {
-      setLoading(false);
+
+      await createGuestUrlRequest(false);
+    } catch (err) {
+      handleGuestError(err);
     }
+  };
+
+  const handleConfirmBypass = async () => {
+    setConfirmSafetyOpen(false);
+    setLoading(true);
+    try {
+      await createGuestUrlRequest(true);
+    } catch (err) {
+      handleGuestError(err);
+    }
+  };
+
+  const createGuestUrlRequest = async (bypassSafety) => {
+    const response = await api.post('/urls/guest', { originalUrl, expiresAt: expiresAt || undefined, bypassSafety });
+    setNewUrlData(response.data.url);
+    setOriginalUrl('');
+    setExpiresAt('');
+    showToast('Url shortened successfully!');
+    setLoading(false);
+  };
+
+  const handleGuestError = (err) => {
+    console.error(err);
+    if (err.response && err.response.data && err.response.data.isUnsafe) {
+      setSafetyWarning({
+        originalUrl,
+        riskScore: err.response.data.safetyInfo?.riskScore || 0,
+        status: err.response.data.safetyInfo?.status || 'unsafe',
+        warning: err.response.data.safetyInfo?.warning || 'URL is marked as high-risk or malicious.'
+      });
+      showToast('URL creation blocked: Safety threat detected.', 'error');
+    } else {
+      showToast('Failed to shorten URL. Try again later.', 'error');
+    }
+    setLoading(false);
   };
 
   const handleCopyText = async (text, type) => {
@@ -1011,6 +1042,51 @@ const Home = () => {
             {toastMsg}
           </Alert>
         </Snackbar>
+
+        {/* Safety Confirmation Dialog */}
+        <Dialog
+          open={confirmSafetyOpen}
+          onClose={() => setConfirmSafetyOpen(false)}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+          PaperProps={{
+            sx: {
+              backgroundColor: 'background.paper',
+              border: '1px solid #f84464',
+              borderRadius: 2
+            }
+          }}
+        >
+          <DialogTitle id="alert-dialog-title" sx={{ color: '#f84464', display: 'flex', alignItems: 'center', gap: 1, fontWeight: 'bold' }}>
+            <WarningIcon /> Unsafe URL Detected
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description" sx={{ color: 'text.primary', mb: 2 }}>
+              The URL you are trying to shorten has been flagged as potentially malicious.
+            </DialogContentText>
+            {safetyScanResult && (
+              <Alert severity="error" variant="outlined" sx={{ borderColor: '#f84464', backgroundColor: 'rgba(248, 68, 100, 0.05)' }}>
+                <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#f84464' }}>
+                  Risk Score: {safetyScanResult.riskScore}%
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  {safetyScanResult.warning}
+                </Typography>
+              </Alert>
+            )}
+            <DialogContentText sx={{ color: 'text.secondary', mt: 2, fontSize: '0.9rem' }}>
+              Are you sure you want to shorten this link? Users who click on it will be shown a warning page before being redirected.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button onClick={() => setConfirmSafetyOpen(false)} color="inherit" sx={{ fontWeight: 'bold' }}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmBypass} variant="contained" sx={{ backgroundColor: '#f84464', color: 'white', '&:hover': { backgroundColor: '#e11d48' }, fontWeight: 'bold' }} autoFocus>
+              Proceed Anyway
+            </Button>
+          </DialogActions>
+        </Dialog>
 
       </Box>
   );

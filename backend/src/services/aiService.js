@@ -360,9 +360,65 @@ const predictCtrScore = async (title, description, platform, timeOfPosting) => {
   };
 };
 
+/**
+ * Generate AI analytics insights from click history
+ * @param {number} mobilePercentage - Percentage of mobile/tablet visitors
+ * @param {string} mostActiveTime - Peak hour string (e.g. "8 PM")
+ * @param {string} bestPerformingDay - Peak day of week (e.g. "Friday")
+ * @param {number} totalClicks - Total clicks registered
+ */
+const generateAudienceInsights = async (mobilePercentage, mostActiveTime, bestPerformingDay, totalClicks) => {
+  if (totalClicks === 0) {
+    return {
+      explanation: 'No redirection clicks registered yet. Once visitors start clicking, AI will analyze their behavior.',
+      recommendation: 'Share your short link on social platforms to begin collecting traffic metrics.'
+    };
+  }
+
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (geminiKey) {
+    const prompt = `Based on the click analytics of a shortened URL:
+    Total Clicks: ${totalClicks}
+    Mobile/Tablet Users: ${mobilePercentage}%
+    Most Active Hour: ${mostActiveTime}
+    Best Performing Day: ${bestPerformingDay}
+    
+    Provide a professional, concise marketing audience insight analysis in raw JSON ONLY.
+    The response must follow this schema:
+    {
+      "explanation": "1-2 sentence explanation of why this audience behavior is occurring",
+      "recommendation": "A highly actionable recommendation for when and how to post future links to maximize CTR"
+    }`;
+    
+    const aiInsight = await queryGemini(prompt, 'You are an advanced digital marketing analytics coordinator.');
+    if (aiInsight) {
+      return {
+        explanation: aiInsight.explanation || `Audience is mainly active on ${bestPerformingDay} at ${mostActiveTime}.`,
+        recommendation: aiInsight.recommendation || `Post future links on ${bestPerformingDay} around ${mostActiveTime}.`
+      };
+    }
+  }
+
+  // Fallback heuristic recommendations
+  let timeDetail = 'evenings';
+  if (mostActiveTime.includes('AM')) {
+    timeDetail = 'mornings';
+  } else {
+    const hr = parseInt(mostActiveTime);
+    if (!isNaN(hr) && hr >= 12 && hr < 17) timeDetail = 'afternoons';
+  }
+
+  return {
+    explanation: `Your audience consists of ${mobilePercentage}% mobile users, showing the highest engagement on ${bestPerformingDay}s around ${mostActiveTime}.`,
+    recommendation: `Post future links on ${bestPerformingDay} ${timeDetail} to capture peak mobile traffic.`
+  };
+};
+
 module.exports = {
   scrapeWebpage,
   generateMarketingSuite,
   checkLinkSafety,
-  predictCtrScore
+  predictCtrScore,
+  generateAudienceInsights
 };
+

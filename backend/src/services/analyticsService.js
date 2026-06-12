@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Url = require('../models/Url');
 const Analytics = require('../models/Analytics');
+const aiService = require('./aiService');
 
 /**
  * Fetch aggregation summary and recent logs for a specific shortened URL
@@ -102,6 +103,54 @@ const getUrlAnalytics = async (urlId, userId, limit = 10) => {
     { $sort: { count: -1 } }
   ]);
 
+  // 10. Aggregate by Day of Week
+  const dayOfWeekDistribution = await Analytics.aggregate([
+    { $match: { urlId: new mongoose.Types.ObjectId(urlId) } },
+    { $group: { _id: { $dayOfWeek: "$timestamp" }, count: { $sum: 1 } } },
+    { $sort: { count: -1 } }
+  ]);
+
+  // 11. Aggregate by Hour of Day
+  const hourOfDayDistribution = await Analytics.aggregate([
+    { $match: { urlId: new mongoose.Types.ObjectId(urlId) } },
+    { $group: { _id: { $hour: "$timestamp" }, count: { $sum: 1 } } },
+    { $sort: { count: -1 } }
+  ]);
+
+  let aiInsights = null;
+  if (url.clicks > 0) {
+    let mobileCount = 0;
+    deviceDistribution.forEach(d => {
+      if (d._id && (d._id.toLowerCase() === 'mobile' || d._id.toLowerCase() === 'tablet')) {
+        mobileCount += d.count;
+      }
+    });
+    const mobilePercentage = Math.round((mobileCount / url.clicks) * 100);
+
+    let mostActiveTime = '12 PM';
+    if (hourOfDayDistribution.length > 0) {
+      const topHour = hourOfDayDistribution[0]._id;
+      const ampm = topHour >= 12 ? 'PM' : 'AM';
+      const hr12 = topHour % 12 || 12;
+      mostActiveTime = `${hr12} ${ampm}`;
+    }
+
+    const daysMap = { 1: 'Sunday', 2: 'Monday', 3: 'Tuesday', 4: 'Wednesday', 5: 'Thursday', 6: 'Friday', 7: 'Saturday' };
+    let bestPerformingDay = 'Monday';
+    if (dayOfWeekDistribution.length > 0) {
+      bestPerformingDay = daysMap[dayOfWeekDistribution[0]._id] || 'Monday';
+    }
+
+    try {
+      aiInsights = await aiService.generateAudienceInsights(mobilePercentage, mostActiveTime, bestPerformingDay, url.clicks);
+      aiInsights.mobilePercentage = mobilePercentage;
+      aiInsights.mostActiveTime = mostActiveTime;
+      aiInsights.bestPerformingDay = bestPerformingDay;
+    } catch (err) {
+      console.error('Failed to generate AI insights:', err);
+    }
+  }
+
   return {
     urlId: url._id,
     shortCode: url.shortCode,
@@ -114,7 +163,8 @@ const getUrlAnalytics = async (urlId, userId, limit = 10) => {
     browserDistribution,
     osDistribution,
     deviceDistribution,
-    countryDistribution
+    countryDistribution,
+    aiInsights
   };
 };
 

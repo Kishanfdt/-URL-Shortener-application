@@ -11,10 +11,10 @@ const aiService = require('./aiService');
  * @param {string} [customAlias] - Optional custom alias back-half (e.g., kishan)
  * @param {Date|string} [expiresAt] - Optional expiration date
  */
-const createUrl = async (originalUrl, userId, host, customAlias, expiresAt) => {
+const createUrl = async (originalUrl, userId, host, customAlias, expiresAt, bypassSafety = false) => {
   // 1. Run safety scan first
   const safetyInfo = await aiService.checkLinkSafety(originalUrl);
-  if (safetyInfo.riskScore >= 65) {
+  if (safetyInfo.riskScore >= 65 && !bypassSafety) {
     const error = new Error(safetyInfo.warning || 'URL is marked as high-risk or malicious.');
     error.statusCode = 400;
     error.isUnsafe = true;
