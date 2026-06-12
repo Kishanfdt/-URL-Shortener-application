@@ -11,8 +11,10 @@ const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
 
-// Enable Helmet for security headers
-app.use(helmet());
+// Enable Helmet for security headers to protect endpoints, allowing cross-origin resources (like QR Codes) to be loaded by the frontend SPA
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
 
 // Global Rate Limiting - 100 requests per 15 minutes per IP
 const globalLimiter = rateLimit({
