@@ -35,6 +35,7 @@ graph TD
 - **📁 AI Campaign Management**: Bundle multiple links together under distinct campaign folders (e.g. *"Summer Sale"*). The AI module aggregates traffic metrics across all links to identify your best/worst performing URLs and provides copy optimizations.
 - **🎯 Engagement CTR Predictor**: Write title/description drafts and simulate platform postings (Twitter, LinkedIn) to forecast conversion scores and get recommendations.
 - **🎨 Vector Branded QR Codes**: Instantly generate matching high-resolution QR codes featuring custom styled color palettes, complete with vector-ready downloading tools.
+- **👤 Personalized Profile Dashboard**: View aggregated workspace statistics (Total Links, Total Clicks, Average Clicks / Link, and Workspace Safety Health) alongside a visual Doughnut chart representation of link traffic contribution, top-performing shortcodes lists, and a glassmorphic Pro Membership Ticket.
 
 ---
 
