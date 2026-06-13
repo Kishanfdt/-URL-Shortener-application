@@ -147,7 +147,3 @@ Below is a preview of the premium Midnight Dark glassmorphic interface:
 
 ---
 
-## 🌐 Deployment Links
-
-- **Production Frontend UI**: *[Insert Frontend URL here]*
-- **Production REST API Endpoint**: *[Insert Backend API URL here]*
