@@ -136,7 +136,7 @@ const Campaigns = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ pt: 3, pb: 6 }}>
+    <Container maxWidth={false} sx={{ pt: 3, pb: 6, px: { xs: 2, sm: 4, md: 6 } }}>
       {/* Header section */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 5, flexDirection: { xs: 'column', sm: 'row' }, gap: 2, textAlign: { xs: 'center', sm: 'left' } }}>
         <Box>

@@ -1,6 +1,6 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, responsiveFontSizes } from '@mui/material/styles';
 
-const theme = createTheme({
+let theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
@@ -22,6 +22,7 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    fontSize: 16,
     h1: {
       fontFamily: '"Outfit", sans-serif',
       fontWeight: 900,
@@ -51,7 +52,8 @@ const theme = createTheme({
     },
     button: {
       textTransform: 'none',
-      fontWeight: 700
+      fontWeight: 700,
+      fontSize: '1.05rem'
     }
   },
   components: {
@@ -96,7 +98,7 @@ const theme = createTheme({
       },
       styleOverrides: {
         root: {
-          borderRadius: 16,
+          borderRadius: 24,
           backgroundColor: 'rgba(21, 28, 45, 0.45)',
           border: '1px solid rgba(255, 255, 255, 0.08)',
           boxShadow: '0 15px 35px rgba(0, 0, 0, 0.3)',
@@ -112,8 +114,9 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 10,
-          padding: '10px 20px',
+          borderRadius: 14,
+          padding: '12px 28px',
+          fontSize: '1.05rem',
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           '&:hover': {
             transform: 'translateY(-1px)'
@@ -145,7 +148,8 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            borderRadius: 10,
+            borderRadius: 14,
+            fontSize: '1.05rem',
             transition: 'all 0.2s ease',
             '& fieldset': {
               borderColor: 'rgba(255, 255, 255, 0.08)'
@@ -164,7 +168,7 @@ const theme = createTheme({
     MuiDialog: {
       styleOverrides: {
         paper: {
-          borderRadius: 16,
+          borderRadius: 20,
           backgroundColor: '#0f121d',
           border: '1px solid rgba(255, 255, 255, 0.08)'
         }
@@ -172,5 +176,7 @@ const theme = createTheme({
     }
   }
 });
+
+theme = responsiveFontSizes(theme);
 
 export default theme;

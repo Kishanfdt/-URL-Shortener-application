@@ -35,15 +35,20 @@ const createUrl = async (originalUrl, userId, host, customAlias, expiresAt, bypa
     return true;
   };
 
-  if (customAlias && validateAlias(customAlias)) {
-    // Validate uniqueness of the custom alias
-    const existing = await Url.findOne({ shortCode: customAlias });
-    if (!existing) {
-      shortCode = customAlias;
+  if (customAlias) {
+    if (!validateAlias(customAlias)) {
+      const error = new Error('Alias must be 3-30 characters long and contain only letters, numbers, dashes, or underscores. It cannot be a reserved word.');
+      error.statusCode = 400;
+      throw error;
     }
-  }
-
-  if (!shortCode) {
+    const existing = await Url.findOne({ shortCode: customAlias });
+    if (existing) {
+      const error = new Error('Custom alias is already in use. Please select a different one.');
+      error.statusCode = 400;
+      throw error;
+    }
+    shortCode = customAlias;
+  } else {
     let attempts = 0;
     const maxAttempts = 5;
 

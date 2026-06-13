@@ -146,7 +146,7 @@ const CampaignDetails = () => {
   const linkCount = campaign.urls?.length || 0;
 
   return (
-    <Container maxWidth="lg" sx={{ pt: 3, pb: 6 }}>
+    <Container maxWidth={false} sx={{ pt: 3, pb: 6, px: { xs: 2, sm: 4, md: 6 } }}>
       {/* Header Back Button & Title */}
       <Box sx={{ mb: 4 }}>
         <Button

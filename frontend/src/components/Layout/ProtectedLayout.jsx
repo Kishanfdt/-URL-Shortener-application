@@ -37,7 +37,7 @@ const ProtectedLayout = () => {
         pt: 2,
         pb: 1
       }}>
-        <Container maxWidth="lg">
+        <Container maxWidth={false} sx={{ px: { xs: 2, sm: 4, md: 6 } }}>
           <Box sx={{
             display: 'flex',
             justifyContent: 'space-between',

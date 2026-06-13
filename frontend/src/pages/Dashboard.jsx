@@ -31,7 +31,8 @@ import {
   Avatar,
   Chip,
   TextField,
-  InputAdornment
+  InputAdornment,
+  LinearProgress
 } from '@mui/material';
 import {
   Link as LinkIcon,
@@ -50,11 +51,22 @@ import {
   Launch,
   DateRange,
   MailOutline,
-  Star
+  Star,
+  Security as SecurityIcon
 } from '@mui/icons-material';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import UrlShortenerForm from '../components/UrlShortenerForm';
+import { Doughnut } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip as ChartTooltip,
+  Legend as ChartLegend
+} from 'chart.js';
+
+// Register Chart.js elements
+ChartJS.register(ArcElement, ChartTooltip, ChartLegend);
 
 // Premium midnight dark theme with BookMyShow Crimson Red accents
 // TabPanel Component
@@ -242,8 +254,67 @@ const Dashboard = () => {
     }
   };
 
+  // Profile Dashboard calculations
+  const avgClicksPerLink = totalLinks > 0 ? (totalClicks / totalLinks).toFixed(1) : 0;
+  
+  // Calculate safety health score: % of links that are safe (risk score < 30)
+  const safeLinksCount = urls.filter(url => !url.safetyInfo || url.safetyInfo.riskScore < 30).length;
+  const safetyHealthScore = totalLinks > 0 ? Math.round((safeLinksCount / totalLinks) * 100) : 100;
+  
+  // Sort links by clicks to get top links
+  const topLinks = [...urls].sort((a, b) => b.clicks - a.clicks);
+  const top5Links = topLinks.slice(0, 5);
+  
+  // Prepare chart data for top 4 links + Other
+  const chartLinks = topLinks.slice(0, 4);
+  const otherLinksClicks = topLinks.slice(4).reduce((sum, u) => sum + u.clicks, 0);
+  
+  const chartLabels = chartLinks.map(u => `/${u.shortCode}`);
+  const chartValues = chartLinks.map(u => u.clicks);
+  
+  if (topLinks.length > 4 && otherLinksClicks > 0) {
+    chartLabels.push('Other');
+    chartValues.push(otherLinksClicks);
+  }
+  
+  const hasClicks = totalClicks > 0;
+  
+  const doughnutData = {
+    labels: chartLabels.length > 0 ? chartLabels : ['No Clicks'],
+    datasets: [
+      {
+        data: chartValues.length > 0 ? chartValues : [1],
+        backgroundColor: ['#f84464', '#3b82f6', '#10b981', '#f59e0b', '#818cf8'],
+        borderWidth: 1,
+        borderColor: '#151829'
+      }
+    ]
+  };
+  
+  const doughnutOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          color: '#9ca3af',
+          boxWidth: 12,
+          font: { size: 11, weight: '500' }
+        }
+      },
+      tooltip: {
+        backgroundColor: '#151829',
+        titleColor: '#f8fafc',
+        bodyColor: '#f8fafc',
+        borderColor: '#222538',
+        borderWidth: 1
+      }
+    }
+  };
+
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth={false} sx={{ py: 4, px: { xs: 2, sm: 4, md: 6 } }}>
       
       {/* Navigation Tabs */}
       <Box sx={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)', mb: 4, pb: 1 }}>
@@ -865,152 +936,325 @@ const Dashboard = () => {
         {/* 4. PROFILE PANEL */}
         <TabPanel value={activeTab} index={3}>
           {user && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              {/* Premium Ticket styled profile */}
-              <Card sx={{
-                display: 'flex',
-                flexDirection: { xs: 'column', sm: 'row' },
-                maxWidth: 650,
-                width: '100%',
-                backgroundColor: 'rgba(21, 24, 41, 0.55)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border: '2px solid #f84464',
-                position: 'relative',
-                overflow: 'visible',
-                borderRadius: 4,
-                boxShadow: '0 15px 40px rgba(248, 68, 100, 0.18)'
-              }}>
-                
-                {/* Punch Holes for ticket stub styling */}
-                <Box sx={{
-                  display: { xs: 'none', sm: 'block' },
-                  position: 'absolute',
-                  top: -12,
-                  left: 172,
-                  width: 24,
-                  height: 24,
-                  backgroundColor: 'background.default',
-                  borderRadius: '50%',
-                  zIndex: 2,
-                  borderBottom: '1px solid #222538'
-                }} />
-                
-                <Box sx={{
-                  display: { xs: 'none', sm: 'block' },
-                  position: 'absolute',
-                  bottom: -12,
-                  left: 172,
-                  width: 24,
-                  height: 24,
-                  backgroundColor: 'background.default',
-                  borderRadius: '50%',
-                  zIndex: 2,
-                  borderTop: '1px solid #222538'
-                }} />
-
-                {/* Left Ticket Stub */}
-                <Box sx={{
-                  width: { xs: '100%', sm: 184 },
-                  backgroundColor: '#221522',
-                  borderRight: { xs: 'none', sm: '2px dashed #f84464' },
-                  borderBottom: { xs: '2px dashed #f84464', sm: 'none' },
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  p: 3,
-                  textAlign: 'center',
-                  borderTopLeftRadius: 14,
-                  borderBottomLeftRadius: { xs: 0, sm: 14 }
-                }}>
-                  <Avatar sx={{
-                    width: 72,
-                    height: 72,
-                    bgcolor: 'primary.main',
-                    fontSize: '2rem',
-                    fontWeight: 'bold',
-                    mb: 2,
-                    boxShadow: '0 4px 15px rgba(248, 68, 100, 0.3)'
+            <Box sx={{ py: 2 }}>
+              <Grid container spacing={3}>
+                {/* 1. Welcome Card Banner */}
+                <Grid item xs={12}>
+                  <Card sx={{
+                    background: 'linear-gradient(135deg, rgba(21, 28, 45, 0.75) 0%, rgba(34, 21, 34, 0.55) 100%)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    p: 1
                   }}>
-                    {user.name.charAt(0).toUpperCase()}
-                  </Avatar>
-                  <Chip
-                    icon={<Star sx={{ fontSize: '14px !important' }} />}
-                    label="PRO TICKET"
-                    color="primary"
-                    size="small"
-                    sx={{ fontWeight: 'bold', letterSpacing: '0.5px' }}
-                  />
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: 'block' }}>
-                    Showstopper Member
-                  </Typography>
-                </Box>
+                    <CardContent sx={{ p: 4, display: 'flex', alignItems: 'center', gap: 3, flexDirection: { xs: 'column', sm: 'row' }, textAlign: { xs: 'center', sm: 'left' } }}>
+                      <Avatar sx={{
+                        width: 80,
+                        height: 80,
+                        bgcolor: 'primary.main',
+                        fontSize: '2.2rem',
+                        fontWeight: 'bold',
+                        boxShadow: '0 4px 20px rgba(248, 68, 100, 0.4)'
+                      }}>
+                        {user.name.charAt(0).toUpperCase()}
+                      </Avatar>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="h4" sx={{ fontWeight: 900, mb: 0.5 }}>
+                          {user.name}'s Profile Workspace
+                        </Typography>
+                        <Typography variant="body1" color="text.secondary">
+                          Manage your account credentials, view aggregated workspace health metrics, and review active premium benefits.
+                        </Typography>
+                      </Box>
+                      <Chip
+                        icon={<Star sx={{ fontSize: '14px !important' }} />}
+                        label="PRO MEMBER"
+                        color="primary"
+                        sx={{ fontWeight: 'bold', px: 1 }}
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
 
-                {/* Right Ticket Info body */}
-                <Box sx={{ flex: 1, p: 4 }}>
-                  <Typography variant="h5" sx={{ fontWeight: 800, mb: 3 }}>
-                    Admit One: {user.name}
-                  </Typography>
+                {/* 2. Key Metrics Row */}
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{ background: 'rgba(21, 28, 45, 0.45)' }}>
+                    <CardContent sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box sx={{ p: 1.5, borderRadius: '50%', background: 'rgba(248, 68, 100, 0.1)', border: '1px solid rgba(248, 68, 100, 0.2)' }}>
+                        <LinkIcon sx={{ color: 'primary.main', display: 'block' }} />
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>
+                          Total Shortlinks
+                        </Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                          {totalLinks}
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
 
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{ background: 'rgba(21, 28, 45, 0.45)' }}>
+                    <CardContent sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box sx={{ p: 1.5, borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                        <TrendingUp sx={{ color: 'secondary.main', display: 'block' }} />
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>
+                          Total Redirects
+                        </Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                          {totalClicks}
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{ background: 'rgba(21, 28, 45, 0.45)' }}>
+                    <CardContent sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box sx={{ p: 1.5, borderRadius: '50%', background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                        <BarChart sx={{ color: '#818cf8', display: 'block' }} />
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>
+                          Avg Clicks / Link
+                        </Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                          {avgClicksPerLink}
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{ background: 'rgba(21, 28, 45, 0.45)' }}>
+                    <CardContent sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box sx={{ p: 1.5, borderRadius: '50%', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                        <SecurityIcon sx={{ color: '#f59e0b', display: 'block' }} />
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>
+                          Workspace Safety
+                        </Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                          {safetyHealthScore}%
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* 3. Left Side: Visual Share Chart & Top performing links list */}
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ height: '100%' }}>
+                    <CardContent sx={{ p: 4, display: 'flex', flexDirection: 'column', height: '100%', gap: 3 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        📊 Link Traffic Distribution
+                      </Typography>
+                      
+                      {hasClicks ? (
+                        <Box sx={{ height: 200, position: 'relative' }}>
+                          <Doughnut data={doughnutData} options={doughnutOptions} />
+                        </Box>
+                      ) : (
+                        <Box sx={{ py: 6, textAlign: 'center', opacity: 0.5 }}>
+                          <BarChart sx={{ fontSize: 48, mb: 1, color: 'text.secondary' }} />
+                          <Typography variant="body2" color="text.secondary">
+                            No redirect clicks logged yet to generate share analytics.
+                          </Typography>
+                        </Box>
+                      )}
+
+                      <Divider />
+
+                      <Box>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>
+                          🔥 Top Performing Shortcodes
+                        </Typography>
+                        
+                        {top5Links.length > 0 ? (
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            {top5Links.map((url) => {
+                              const sharePercentage = totalClicks > 0 ? Math.round((url.clicks / totalClicks) * 100) : 0;
+                              return (
+                                <Box key={url.id}>
+                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                      <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                                        /{url.shortCode}
+                                      </Typography>
+                                      <Typography variant="caption" color="text.secondary" sx={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        ({url.originalUrl})
+                                      </Typography>
+                                    </Box>
+                                    <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                                      {url.clicks} clicks ({sharePercentage}%)
+                                    </Typography>
+                                  </Box>
+                                  <LinearProgress variant="determinate" value={sharePercentage} sx={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(255, 255, 255, 0.05)' }} />
+                                </Box>
+                              );
+                            })}
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            No links created yet. Get started in the Generate tab!
+                          </Typography>
+                        )}
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* 4. Right Side: Profile Details (Premium Ticket format) */}
+                <Grid item xs={12} md={6}>
+                  <Card sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    height: '100%',
+                    backgroundColor: 'rgba(21, 24, 41, 0.55)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                    border: '2px solid #f84464',
+                    position: 'relative',
+                    overflow: 'visible',
+                    borderRadius: 4,
+                    boxShadow: '0 15px 40px rgba(248, 68, 100, 0.18)'
+                  }}>
                     
-                    {/* Email row */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <MailOutline color="disabled" />
-                      <Box>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                          Email Address
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {user.email}
-                        </Typography>
-                      </Box>
+                    {/* Punch Holes for ticket stub styling */}
+                    <Box sx={{
+                      display: { xs: 'none', sm: 'block' },
+                      position: 'absolute',
+                      top: -12,
+                      left: 172,
+                      width: 24,
+                      height: 24,
+                      backgroundColor: 'background.default',
+                      borderRadius: '50%',
+                      zIndex: 2,
+                      borderBottom: '1px solid #222538'
+                    }} />
+                    
+                    <Box sx={{
+                      display: { xs: 'none', sm: 'block' },
+                      position: 'absolute',
+                      bottom: -12,
+                      left: 172,
+                      width: 24,
+                      height: 24,
+                      backgroundColor: 'background.default',
+                      borderRadius: '50%',
+                      zIndex: 2,
+                      borderTop: '1px solid #222538'
+                    }} />
+
+                    {/* Left Ticket Stub */}
+                    <Box sx={{
+                      width: { xs: '100%', sm: 184 },
+                      backgroundColor: '#221522',
+                      borderRight: { xs: 'none', sm: '2px dashed #f84464' },
+                      borderBottom: { xs: '2px dashed #f84464', sm: 'none' },
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      p: 3,
+                      textAlign: 'center',
+                      borderTopLeftRadius: 14,
+                      borderBottomLeftRadius: { xs: 0, sm: 14 }
+                    }}>
+                      <Avatar sx={{
+                        width: 72,
+                        height: 72,
+                        bgcolor: 'primary.main',
+                        fontSize: '2rem',
+                        fontWeight: 'bold',
+                        mb: 2,
+                        boxShadow: '0 4px 15px rgba(248, 68, 100, 0.3)'
+                      }}>
+                        {user.name.charAt(0).toUpperCase()}
+                      </Avatar>
+                      <Chip
+                        icon={<Star sx={{ fontSize: '14px !important' }} />}
+                        label="PRO TICKET"
+                        color="primary"
+                        size="small"
+                        sx={{ fontWeight: 'bold', letterSpacing: '0.5px' }}
+                      />
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: 'block' }}>
+                        Showstopper Member
+                      </Typography>
                     </Box>
 
-                    {/* Member since row */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <DateRange color="disabled" />
-                      <Box>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                          Registration Date
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {new Date(user.createdAt).toLocaleDateString()}
-                        </Typography>
+                    {/* Right Ticket Info body */}
+                    <Box sx={{ flex: 1, p: 4 }}>
+                      <Typography variant="h5" sx={{ fontWeight: 800, mb: 3 }}>
+                        Admit One: {user.name}
+                      </Typography>
+
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        
+                        {/* Email row */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <MailOutline color="disabled" />
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                              Email Address
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {user.email}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        {/* Member since row */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <DateRange color="disabled" />
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                              Registration Date
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        {/* Total traffic row */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <TrendingUp color="disabled" />
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                              Account Click Volume
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {totalClicks} total redirects across {totalLinks} links
+                            </Typography>
+                          </Box>
+                        </Box>
                       </Box>
+
+                      <Divider sx={{ my: 3 }} />
+
+                      {/* Plan features check list */}
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 'bold', textTransform: 'uppercase' }}>
+                        Branded Features Unlocked
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', lineHeight: 1.5 }}>
+                        &bull; Infinite URL links shortening<br />
+                        &bull; Custom aliases mapping (strict error checking)<br />
+                        &bull; Dynamic expiry date schedules<br />
+                        &bull; High-res QR codes retrieval & downloads<br />
+                        &bull; Operating system, Geolocation, and browser analytics
+                      </Typography>
                     </Box>
-
-                    {/* Total traffic row */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <TrendingUp color="disabled" />
-                      <Box>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                          Account Click Volume
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {totalClicks} total redirects across {totalLinks} links
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-
-                  <Divider sx={{ my: 3 }} />
-
-                  {/* Plan features check list */}
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 'bold', textTransform: 'uppercase' }}>
-                    Branded Features Unlocked
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', lineHeight: 1.5 }}>
-                    &bull; Infinite URL links shortening<br />
-                    &bull; Custom aliases mapping (silent auto-fallback)<br />
-                    &bull; Dynamic expiry date schedules<br />
-                    &bull; High-res QR codes retrieval & downloads<br />
-                    &bull; Operating system, Geolocation, and browser analytics
-                  </Typography>
-                </Box>
-
-              </Card>
+                  </Card>
+                </Grid>
+              </Grid>
             </Box>
           )}
         </TabPanel>
