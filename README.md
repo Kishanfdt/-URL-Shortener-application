@@ -9,6 +9,8 @@ LinkEnhancer is a sleek, modern, enterprise-ready URL Shortener and click-teleme
 
 ---
 
+Demo video Link : https://youtu.be/e2HzYNHPZGA?si=zIsTkbqO-Kn4D3_3
+
 ## 🏗️ Architecture Diagram
 
 ```mermaid
